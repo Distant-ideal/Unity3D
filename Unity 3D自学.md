@@ -83,6 +83,8 @@ print(num.GetType());
 
 给image添加一个脚本
 
+### 脚本
+
 ```
 using System.Collections;
 using System.Collections.Generic;
@@ -127,10 +129,11 @@ public class ButtonMove : MonoBehaviour, IDragHandler, IEndDragHandler
         get { return ((Vector2)transform.position - _begin).normalized.y; }
     }
 }
-
 ```
 
 ## 控制模型移动
+
+### 脚本
 
 ```
 using System.Collections;
@@ -172,6 +175,8 @@ public class playermove : MonoBehaviour
 
 ## 镜头跟随
 
+### 脚本
+
 ```
 using System.Collections;
 using System.Collections.Generic;
@@ -197,6 +202,8 @@ public class CameraMove : MonoBehaviour
 ```
 
 ## 小兵生成
+
+### 脚本
 
 ```
 using System.Collections;
@@ -527,15 +534,240 @@ public class SmartSoldier : MonoBehaviour {
 
 ```
 
+## 添加标签
+
+在Edit中project settings中找到Tags和Layers点击进入
+
+在右侧可以添加标签
+
+## 防御塔类型
+
+给每一个防御塔更改标签为Tower或者EnemyTower进行敌我防御塔区分
+
+### 脚本
+
+```
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class Tower : MonoBehaviour {
+
+	public int towerType;
+	// Use this for initialization
+	void Start () {
+		if (this.gameObject.tag.Equals ("Tower")) { //读取标签看是否是地方箭塔 //为了区分我方箭塔和小兵
+			towerType = 0; //为了和小兵进行匹配所以使用int型
+		} else {
+			towerType = 1;
+		}
+	}
+	
+	// Update is called once per frame
+	void Update () {
+		
+	}
+}
+
+```
+
+## 防御塔范围
+
+添加碰撞体如果小兵进入碰撞体就插入到list中如果小兵消失出List
+
+英雄同理
+
+### 脚本
+
+```
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class Tower : MonoBehaviour {
+
+	public List <GameObject> listSoldier = new List<GameObject> (); //小兵攻击箭塔队列
+	public List <GameObject> listHero = new List<GameObject> (); //英雄攻击箭塔队列
+	public int towerType;
 
 
+	// Use this for initialization
+	void Start () {
+		if (this.gameObject.tag.Equals ("Tower")) { //读取标签看是否是地方箭塔 //为了区分我方箭塔和小兵
+			towerType = 0; //为了和小兵进行匹配所以使用int型
+		} else {
+			towerType = 1;
+		}
+	}
+	
+	void OnTriggerEnter(Collider col) { //触发函数
+		if (col.gameObject.tag == "Player") {
+			listHero.Add (col.gameObject);
+		} else {
+			SmartSoldier soldier = col.GetComponent<SmartSoldier> ();
+			if (soldier && soldier.type != towerType) { //判断小兵是否不存在或者类型不匹配
+				//print(listSoldier.Count);
+				listSoldier.Add (col.gameObject); //插入到队列中
+			}
+		}
+	}
 
+	void OnTriggerExit(Collider col) {
+		if(col.gameObject.tag == "Player") {
+			listHero.Remove (col.gameObject);
+		} else {
+			listSoldier.Remove (col.gameObject); //删除出队列
+		}
+	}
+} 
+```
 
+## 子弹移动和伤害
 
+创建子弹预制体
 
+给预制体添加rigidboday和spherecolider组件使子弹与小兵英雄可以发生碰撞
 
+### 脚本
 
+```
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
 
+public class Bullet : MonoBehaviour {
+	public Tower tower;
+	private GameObject target;
+	// Use this for initialization
+
+	public float speed = 20f;
+
+	void Start () {
+		tower = GetComponentInParent<Tower> (); //箭塔对于子弹来说相当于父物体
+		Destroy (this.gameObject, 1f);
+	}
+	 
+	void OnTriggerEnter(Collider col) {
+		if (col.gameObject.tag == "Soldier") {
+			//销毁小兵
+			Health hp = col.GetComponent<Health>();
+			if (hp) {
+				hp.TakeDamage (0.5f);
+				if (hp.hp.Value <= 0) {
+					tower.listSoldier.Remove (col.gameObject);
+					Destroy (col.gameObject);
+				}
+				Destroy (this.gameObject);
+			}
+		} else if(col.gameObject.tag == "Palyer"){ //防止触发箭塔条件
+			//销毁英雄
+			Health hp = col.GetComponent<Health>();
+			if (hp) {
+				hp.TakeDamage (0.5f);
+				if (hp.hp.Value <= 0) {
+					tower.listHero.Remove (col.gameObject);
+					Destroy (col.gameObject);
+				}
+				Destroy (this.gameObject);
+			}
+		}
+	}
+
+	public void SetTarget(GameObject target) { 
+		this.target = target;
+	}
+
+	// Update is called once per frame
+	void Update () {
+		if(target) {
+			Vector3 dir = target.transform.position - transform.position;//三维向量
+			GetComponent<Rigidbody>().velocity = dir.normalized * speed;
+		} else {
+			Destroy (this.gameObject);
+		}
+	}
+}
+```
+
+## 血条显示
+
+将血条值作为背景的子物体
+
+### 脚本
+
+```
+
+using UnityEngine;
+using System.Collections;
+[ExecuteInEditMode]
+public class spriteSlider : MonoBehaviour {
+ 
+    [SerializeField]
+    private Transform front;
+    public float m_value;
+ 
+    public float Value
+    {
+        get
+        {
+            return m_value;
+        }
+        set
+        {
+            m_value = value;
+            front.localScale = new Vector3(value, 1, 1);
+            front.localPosition = new Vector3((1 - m_value) * -0.8f, 0);//这个式子可以自己设置数值关观察下  调整数值使减血后的血条向左对齐
+          
+        }
+    }   
+}
+```
+
+## 减血方法
+
+### 脚本
+
+```
+
+using UnityEngine;
+using System.Collections;
+ 
+public class Health : MonoBehaviour {
+ 
+    public spriteSlider hp;
+    private uint value=1;//uint 表示值不可能为负
+ 
+	// Use this for initialization
+	void Start () {
+        hp=GetComponentInChildren<spriteSlider>();//代码找到组建，不用一个个拖拽
+        Init();
+	}
+ 
+    public void Init()
+    {
+        hp.Value = value;//血条初始化值为1
+    }
+    //减血的方法
+    public void TakeDamage(float damage)
+    {
+ 
+        hp.Value -= damage;
+    }
+	
+}
+```
+
+## 将事件挂载到动画上
+
+找到动画
+
+找到预制体摁ctirl+6或者在windows中找到Animation
+
+进入后如果是只读（无法插入事件）的动画就找到原动画ctirl+d重新生成一个自己的动画就可以插入事件了
+
+找到想要插入的帧数添加事件
+
+一般动画只添加一个事件防止出现错误
 
 
 
