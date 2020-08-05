@@ -52,9 +52,15 @@ FBX导入时将Rig中Animation Type选为Legacy
 
 解决方法：重新复制一份动画，用重新复制的这份动画。
 
+## 14.You are trying to create a MonoBehaviour using the 'new' keyword
 
+习惯了写单例，或者常规的单例模式
 
+当你继承了MonoBehaviour 如果你这样写
 
+你会发现instance 永远为空的（即使走了这一步的instance = new Single();） 而且你回收到如下的警告
+
+You are trying to create a MonoBehaviour using the 'new' keyword.  This is not allowed.  MonoBehaviours can only be added using AddComponent().  Alternatively, your script can inherit from ScriptableObject or no base class at all
 
 
 
