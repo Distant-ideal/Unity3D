@@ -62,5 +62,11 @@ FBX导入时将Rig中Animation Type选为Legacy
 
 You are trying to create a MonoBehaviour using the 'new' keyword.  This is not allowed.  MonoBehaviours can only be added using AddComponent().  Alternatively, your script can inherit from ScriptableObject or no base class at all
 
+## 15.unity中图片无法插入
+
+先将图片导入，然后打开图片的属性，找到texture type类型修改为 2D and UI，这时候就可以插进去了。
+
+
+
 
 
