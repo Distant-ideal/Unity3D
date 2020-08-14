@@ -66,7 +66,7 @@ You are trying to create a MonoBehaviour using the 'new' keyword.  This is not a
 
 先将图片导入，然后打开图片的属性，找到texture type类型修改为 2D and UI，这时候就可以插进去了。
 
+## 16.ScrollRect控件添加后其中文本移动后自动复位
 
-
-
+通过改变text属性中pivot中xy进行位置的移动调整
 
